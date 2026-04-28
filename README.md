@@ -507,7 +507,10 @@ The hardware carrier board is fully specified. The remaining work is pure softwa
 
 ## License
 
-*TBD — Choose an appropriate open-hardware license (e.g., CERN-OHL-S-2.0 or CERN-OHL-P-2.0).*
+This project is licensed under the **CERN Open Hardware Licence - Strongly Reciprocal v2.0 (CERN-OHL-S v2.0)**. 
+
+- **Hardware:** All KiCad PCB designs, schematics, and BOM are open-source. Any derivative hardware must be shared under the same license.
+- **Software/HDL:** While the hardware is CERN-OHL-S, the FPGA cores and RP2040 firmware may be subject to their own respective licenses (typically GPL or BSD). Please check individual sub-folders.
 
 ---
 
