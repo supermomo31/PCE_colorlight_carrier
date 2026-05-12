@@ -1,0 +1,5 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "MyLCSCLibmob") (type "KiCad") (uri "${HOME}/MyLCSCLibmob.pretty") (options "") (descr ""))
+	(lib (name "Library") (type "KiCad") (uri "${HOME}/Desktop/projet en cours/PCE_Colorlight_Carrier/Untitled/Library.pretty") (options "") (descr ""))
+)
