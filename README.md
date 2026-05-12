@@ -56,7 +56,7 @@ graph TD
     CORE["FPGA Core (core.kicad_sch)<br/>Lattice ECP5 via Colorlight i5"]
     FIO["Front I/O (front_io.kicad_sch)<br/>HuCard Slot, SD, Controllers"]
     AV["Audio / Video (av.kicad_sch)<br/>SCART, HDMI, Jack 3.5mm"]
-    USB["USB Host (usb_host.kicad_sch)<br/>RP2040 + FE1.1s Hub"]
+    USB["USB Host (usb_host.kicad_sch)<br/>RP2040 + CH334S Hub"]
     NET["Network (core.kicad_sch)<br/>Ethernet RJ45 via Broadcom PHY"]
 
     PWR -->|"+5V_SYS / +3.3V_SYS"| CORE
@@ -82,16 +82,16 @@ graph TD
 | **Physical Cartridge** | 38-pin HuCard slot | 8-bit data + 21-bit address + 3 control lines |
 | **ROM Storage** | Micro-SD card (SPI) | Load ROMs/CD images into SDRAM |
 | **Native Controllers** | 2× Mini-DIN 8 (SNAC) | Direct FPGA connection, zero-latency |
-| **USB Controllers** | 4× USB-A via FE1.1s hub | Managed by RP2040, forwarded via SPI |
+| **USB Controllers** | 4× USB-A via CH334S hub | Managed by RP2040, forwarded via SPI |
 | **Analog Video** | ADV7125 DAC + THS7374 buffer | 9-bit RGB → SCART (Mini-DIN 9) |
 | **Digital Video** | Passive TMDS | HDMI Type-A output |
 | **Audio** | PCM5102A I2S DAC | Stereo via SCART + 3.5mm Jack |
 | **NFC (TapTo)** | PN532 module (I2C) | Tap a tag → load a game |
 | **Ethernet** | Broadcom B50612D PHY (onboard) | RJ45 MagJack — network loading, netplay |
 | **CD-ROM (Optional)** | IDE/ATAPI 44-pin header (DNP) | Slim laptop CD drive for PC Engine CD-ROM² |
-| **JTAG Programming** | FT232HL + Pogo Pins | Flash ECP5 bitstream via openFPGALoader |
+| **JTAG Programming** | FT2232HL Channel A + Pogo Pins | Flash ECP5 bitstream via openFPGALoader |
 | **RP2040 Programming** | SWD 3-pin header + BOOTSEL | Flash firmware via Picoprobe / ST-Link |
-| **Debug** | UART 3-pin header | TX/RX from FPGA to USB-TTL dongle |
+| **Debug** | FT2232HL Channel B UART | FPGA UART debug console on the same USB debug port |
 | **Power** | USB-C (5V) | Polyfuse protected, DPDT power switch |
 
 ---
@@ -140,31 +140,31 @@ The SODIMM 200 connector has 200 pins total. After deductions:
 | Sub-Sheet | KiCad Symbol | Role | Qty | LCSC Ref |
 |:---|:---|:---|:---:|:---|
 | **FPGA_Core** | `Colorlight:Colorlight_i5_v7` | SODIMM 200 socket for i5 module | 1 | C13744 |
-| | `Interface_USB:FT232HL` | USB → MPSSE (JTAG) bridge | 1 | C84151 |
+| | `Interface_USB:FT2232HL` | USB → dual-channel MPSSE/UART bridge | 1 | C27882 |
 | | `Connector_Generic:Conn_01x04` | Pogo Pin contacts (JTAG test pads) | 1 | Mill-Max / Ali |
-| | `Memory_EEPROM:93LC46B-xSN` | FT232HL identification EEPROM | 1 | C130424 |
-| | `Device:Crystal` | 12 MHz SMD crystal (3225) for FT232HL | 1 | C9002 |
-| | `Connector_Generic:Conn_01x03` | UART debug pin header (TX/RX/GND) | 1 | THT header |
+| | `Memory_EEPROM:93LC46B-xSN` | FT2232HL identification EEPROM | 1 | C130424 |
+| | `Device:Crystal` | 12 MHz SMD crystal (3225) for FT2232HL | 1 | C9002 |
+| | `Connector:USB_C_Receptacle_USB2.0` | Dedicated USB debug/JTAG port | 1 | C165948 |
 | | `Connector:RJ45_Shielded_MagJack` | Ethernet RJ45 with integrated magnetics | 1 | C386755 |
 | **Power** | `Connector:USB_C_Receptacle_USB2.0` | 5V power input | 1 | C165948 |
 | | `Device:Polyfuse` | Resettable PTC fuse (2A/3A) | 1 | C373379 |
 | | `Switch:SW_DPDT_x2` | Main ON/OFF power switch | 1 | THT mech. |
-| | `Regulator_Linear:AMS1117-3.3` | 3.3V LDO regulator | 1 | C6186 |
-| | Misc `Device:R` / `Device:C` | 5.1kΩ resistors, decoupling caps | X | C23186 / C19702 |
+| | Buck DC/DC 3.3V 2A/3A | Main 3.3V regulator from +5V_SYS | 1 | TBD |
+| | Misc `Device:R` / `Device:C` | 5.1kΩ resistors, decoupling caps | X | C23   186 / C19702 |
 | **Audio_Video** | `Video:ADV7125` | RGB Video DAC (24-bit) | 1 | C10141 |
 | | `Audio_DAC:PCM5102A` | I2S Stereo Audio DAC | 1 | C43360 |
 | | `Video:THS7374` | 75Ω Video buffer / amplifier | 1 | C60074 |
 | | `Connector_Mini-DIN:Mini-DIN-9` | SCART output (MegaDrive 2 pinout) | 1 | Custom |
 | | `Connector:HDMI_A` | HDMI Type-A output | 1 | C138388 |
 | | `Connector_Audio:Jack_3.5mm` | 3.5mm stereo headphone jack | 1 | Custom |
-| **Front_IO** | `74xx:74LVC245` | Bus transceivers (5V↔3.3V level shift) | 3 | C9605 |
+| **Front_IO** | `74xx:74LVC8T245` | Dual-supply bus transceivers (5V↔3.3V level shift) | 4 | TBD |
 | | `Connector_Generic:Conn_02x19` | HuCard 38-pin cartridge slot | 1 | Custom |
 | | `Connector:MicroSD_Card_SPI` | Micro-SD card reader (SPI) | 1 | C91145 |
 | | `Connector_Mini-DIN:Mini-DIN-8` | SNAC controller ports (PC Engine) | 2 | Custom |
 | | `Switch:SW_Push` | Tactile push buttons (Menu/Sel/Start/Reset) | 4 | C118365 |
 | | `Connector_Generic:Conn_02x22` | IDE 44-pin slim header (optional, DNP) | 1 | THT mech. |
 | **USB_Host** | `MCU_RaspberryPi_and_Boards:RP2040` | USB host MCU (bare chip) | 1 | C2842407 |
-| | `Interface_USB:FE1.1s` | USB 2.0 hub controller (4-port) | 1 | C13890 |
+| | `Interface_USB:CH334S` | USB 2.0 hub controller (4-port) | 1 | C5187525 |
 | | `Memory_Flash:W25Q16` | 16 Mbit QSPI flash (RP2040 boot) | 1 | C82317 |
 | | `Device:Crystal` | 12 MHz SMD crystal (3225) for RP2040 | 1 | C9002 |
 | | `Connector:USB_A` | USB-A receptacles for gamepads | 4 | C85901 |
@@ -181,19 +181,21 @@ graph LR
     USBC["USB-C VBUS (5V)"] --> FUSE["Polyfuse PTC 2A/3A"]
     FUSE --> SW["DPDT ON/OFF Switch"]
     SW --> V5["+5V_SYS Rail"]
-    V5 --> LDO["AMS1117-3.3"]
-    LDO --> V33["+3.3V_SYS Rail"]
+    V5 --> BUCK["Buck DC/DC 3.3V<br/>2A min / 3A recommended"]
+    BUCK --> V33["+3.3V_SYS Rail"]
 ```
 
 - **USB-C Configuration:** 5.1kΩ pull-down resistors on both CC1 and CC2 to GND (power-only, D+/D- floating)
+- **Recommended PSU:** USB-C 5V / 3A supply, no USB-PD required
 - **Power Distribution:** `+5V_SYS` and `+3.3V_SYS` are exported as hierarchical labels to all other sheets
-- **Decoupling:** 10µF + 100nF between AMS1117 VOUT and GND
+- **3.3V Regulation:** use a buck converter, not an AMS1117 LDO, for the main rail
+- **Decoupling:** follow the buck datasheet; minimum 22–47µF + 100nF at VIN and 47–100µF + 100nF at VOUT
 
 ### B. USB Host (RP2040)
 
 ```mermaid
 graph TD
-    FE["FE1.1s<br/>USB 2.0 Hub"]
+    FE["CH334S<br/>USB 2.0 Hub"]
     P1["USB-A Port 1"] & P2["USB-A Port 2"] & P3["USB-A Port 3"] & P4["USB-A Port 4"]
     RP["RP2040<br/>Host Controller"]
     SWD["SWD Header (3-pin)"]
@@ -208,8 +210,8 @@ graph TD
     RP -->|"SPI (MISO/MOSI/SCK/CS)"| FPGA(("To FPGA Core"))
 ```
 
-- **Hub Wiring:** 4 USB-A ports wired in star topology to FE1.1s downstream ports
-- **RP2040 USB:** Native USB D+/D- connected to FE1.1s upstream port (host mode)
+- **Hub Wiring:** 4 USB-A ports wired in star topology to CH334S downstream ports
+- **RP2040 USB:** Native USB D+/D- connected to CH334S upstream port (host mode)
 - **CRITICAL — SWD Header:** 3-pin header (SWDIO, SWCLK, GND) is mandatory for initial firmware flashing
 - **BOOTSEL Button:** Tied to QSPI_SS — pull to GND to enter USB bootloader mode
 - **TapTo NFC:** PN532 connected via I2C on RP2040 GPIO4 (SDA) / GPIO5 (SCL), powered from +3.3V_SYS
@@ -220,14 +222,14 @@ graph TD
 ```mermaid
 graph TD
     SLOT["HuCard Slot (38 pins)"]
-    LVC1["74LVC245"] & LVC2["74LVC245"] & LVC3["74LVC245"]
+    LVC1["74LVC8T245"] & LVC2["74LVC8T245"] & LVC3["74LVC8T245"] & LVC4["74LVC8T245"]
     SD["Micro-SD Card"]
     P1["SNAC P1 (Mini-DIN 8)"] & P2["SNAC P2 (Mini-DIN 8)"]
     BTN["System Buttons"]
     IDE["IDE 44-pin Header<br/>(Optional / DNP)"]
 
-    SLOT -->|"5V signals"| LVC1 & LVC2 & LVC3
-    LVC1 & LVC2 & LVC3 -->|"3.3V safe signals"| FPGA(("To FPGA Core"))
+    SLOT -->|"5V signals / VCCB=5V"| LVC1 & LVC2 & LVC3 & LVC4
+    LVC1 & LVC2 & LVC3 & LVC4 -->|"3.3V signals / VCCA=3.3V"| FPGA(("To FPGA Core"))
     SD -->|"SPI (DAT/CMD/CLK)"| FPGA
     P1 -->|"D0..3 / SEL / CLR"| FPGA
     P2 -->|"D0..3 / SEL / CLR"| FPGA
@@ -235,7 +237,7 @@ graph TD
     IDE -->|"ATAPI 16-bit PIO"| FPGA
 ```
 
-- **HuCard Slot (38 pins):** Never connected directly to FPGA — all 32 signals pass through 3× 74LVC245 level shifters (5V ↔ 3.3V protection). FPGA pins 41→84 (contiguous block)
+- **HuCard Slot (38 pins):** Never connected directly to FPGA — all 32 signals pass through 4× 74LVC8T245 dual-supply level shifters (`VCCA=3.3V_SYS`, `VCCB=5V_SYS`). FPGA pins 41→84 (contiguous block)
 - **SNAC Controllers:** D0–D3 = controller → FPGA (input), SEL/CLR = FPGA → controller (output). 10kΩ pull-ups on data lines
 - **Micro-SD:** SPI mode with 10kΩ pull-ups on data lines. FPGA pins: F18/G16/E18/F17
 - **IDE/ATAPI (Optional):** 44-pin slim IDE header for physical CD-ROM drive. 25 GPIOs, DNP by default. See [dedicated section](#optional-ideatapi-cd-rom-header)
@@ -255,8 +257,8 @@ graph TD
     CAP -->|"Digital TMDS"| HDMI["HDMI Type-A"]
 ```
 
-- **Video DAC (ADV7125):** 560Ω (1%) resistor on RSET pin. Outputs → THS7374 buffer → SCART
-- **Audio DAC (PCM5102A):** SCK (pin 11) tied to GND (enables internal PLL). FMT (pin 16) tied to GND (I2S standard)
+- **Video DAC (ADV7125):** 560Ω (1%) resistor on RSET, `CLOCK` driven by FPGA `VIDEO_DAC_CLK`, `~BLANK`/`~SYNC`/`~PSAVE` tied or driven as documented, and `IOR`/`IOG`/`IOB` routed through the recommended output network → THS7374 buffer → SCART
+- **Audio DAC (PCM5102A):** `FLT` (pin 11) tied to GND, `SCK` (pin 12) tied to GND (enables internal PLL), and `FMT` (pin 16) tied to GND (I2S standard)
 - **HDMI (Passive TMDS):** 100nF ceramic capacitor in series on each of the 8 TMDS data lines (AC coupling). FPGA pins 95→113 (contiguous differential pairs)
 - **SCART Pinout (MegaDrive 2 / Mini-DIN 9):** Pin 1 = CSYNC, Pin 2 = +5V (via 470Ω), Pins 3/4 = L/R Audio, Pin 6 = Blue, Pin 7 = Green, Pin 8 = Red
 
@@ -264,8 +266,9 @@ graph TD
 
 ```mermaid
 graph TD
-    PC["PC (USB-C)"] --> FT232["FT232HL<br/>MPSSE Bus"]
-    FT232 -->|"TCK / TDI / TDO / TMS"| POGO["Pogo Pin Contacts"]
+    PC["PC (dedicated USB-C debug)"] --> FT2232["FT2232HL<br/>Channel A: JTAG<br/>Channel B: UART"]
+    FT2232 -->|"ADBUS0..3: TCK / TDI / TDO / TMS"| POGO["Pogo Pin Contacts"]
+    FT2232 -->|"BDBUS0/1: UART TX/RX"| UART["FPGA UART<br/>Pins 116 / 118"]
     POGO -.->|"Mechanical compression"| ECP5["Colorlight i5<br/>(Lattice ECP5)"]
 ```
 
@@ -274,8 +277,8 @@ graph TD
   - Test Pad J32 → TDI (ADBUS1)
   - Test Pad J30 → TDO (ADBUS2)
   - Test Pad J31 → TMS (ADBUS3)
-- **FT232HL:** 12 MHz crystal on OSCI/OSCO (22pF load caps). EEPROM 93C46 for device identification (optional but recommended)
-- **Debug UART:** FPGA pins 116 (G5) = TX, 118 (D16) = RX → 3-pin header for USB-TTL dongle
+- **FT2232HL:** 12 MHz crystal on OSCI/OSCO (22pF load caps). EEPROM 93C46 for device identification is optional but recommended
+- **Debug UART:** FT2232HL Channel B connects to FPGA pins 116 (G5) = TX and 118 (D16) = RX. A separate 3-pin UART header may be kept as optional test/debug access
 
 ### F. Ethernet (RJ45)
 
@@ -400,6 +403,16 @@ graph LR
 | GREEN (3 bits) | 87, 89, 91 | K19, J20, J19 |
 | BLUE (3 bits) | 93, 86, 88 | H20, H18, H17 |
 | CSYNC | 79 | M18 |
+| VIDEO_DAC_CLK | à assigner | à assigner |
+
+Notes ADV7125 :
+
+- **CLOCK** doit recevoir `VIDEO_DAC_CLK` depuis le FPGA via une résistance série 22Ω à 33Ω.
+- **~BLANK** peut être relié à +3.3V_SYS si le FPGA force RGB=0 pendant les blankings, sinon il doit être piloté par le FPGA.
+- **~SYNC** doit être relié à +3.3V_SYS pour ne pas injecter de sync-on-green ; `CSYNC` reste une ligne séparée vers le THS7374.
+- **~PSAVE** doit être relié à +3.3V_SYS, idéalement via une pull-up 10kΩ.
+- **VREF** et **COMP** doivent recevoir les composants recommandés par le datasheet et ne doivent pas rester flottants.
+- Utiliser `IOR`, `IOG`, `IOB` vers le THS7374 avec le réseau de charge recommandé ; ne pas utiliser `~IOR`, `~IOG`, `~IOB` sauf besoin spécifique.
 
 ### HDMI (TMDS Differential Pairs)
 
@@ -410,7 +423,7 @@ graph LR
 | D2+ / D2- | 103 / 109 | E20 / E19 |
 | CLK+ / CLK- | 111 / 113 | D20 / D19 |
 
-### HuCard Cartridge Slot (via 74LVC245 Level Shifters)
+### HuCard Cartridge Slot (via 74LVC8T245 Dual-Supply Level Shifters)
 
 **Data Bus (Bidirectional):**
 
@@ -505,12 +518,25 @@ The hardware carrier board is fully specified. The remaining work is pure softwa
 
 ---
 
+## Project Log
+
+### New drop — First KiCad schematic drafts
+
+This repository now includes the first draft of the KiCad schematics for the carrier board.
+
+This project is not presented as a finished or validated hardware design. I am a complete hobbyist, very new to electronics and FPGA design, and this work is mainly a learning journey.
+
+The motivation is personal: when I was a kid, I used to dream while looking at magazine pages showing CoreGrafx and PC Engine games. This project is a way to explore that fascination from the hardware side.
+
+The dream goal would be to reach a functional custom PCB, then successfully bring up a PC Engine core on it.
+
+Any help, advice, review, correction, or contribution would of course be very welcome.
+
+---
+
 ## License
 
-This project is licensed under the **CERN Open Hardware Licence - Strongly Reciprocal v2.0 (CERN-OHL-S v2.0)**. 
-
-- **Hardware:** All KiCad PCB designs, schematics, and BOM are open-source. Any derivative hardware must be shared under the same license.
-- **Software/HDL:** While the hardware is CERN-OHL-S, the FPGA cores and RP2040 firmware may be subject to their own respective licenses (typically GPL or BSD). Please check individual sub-folders.
+*TBD — Choose an appropriate open-hardware license (e.g., CERN-OHL-S-2.0 or CERN-OHL-P-2.0).*
 
 ---
 
