@@ -1,3 +1,4 @@
+![Texte alternatif](https://github.com/user-attachments/files/28111498/PCB.tiff)
 # PCE Colorlight Carrier — FPGA PC Engine on Colorlight i5
 
 > A dedicated hardware carrier board for running a cycle-accurate **PC Engine / TurboGrafx-16** core on a **Colorlight i5** (Lattice ECP5) FPGA module. Designed in KiCad. Inspired by the MiSTer FPGA ecosystem, built as a standalone console.
@@ -533,6 +534,7 @@ The dream goal would be to reach a functional custom PCB, then successfully brin
 Any help, advice, review, correction, or contribution would of course be very welcome.
 
 ---
+### Update May 21, 2026 - I've committed the ultimate sin of making a PCB where pretty much everything is broken.
 
 ## License
 
