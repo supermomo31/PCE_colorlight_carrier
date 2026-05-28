@@ -1,4 +1,4 @@
-<img width="896" height="616" alt="PCB" src="https://github.com/user-attachments/assets/a95eb135-e961-4d51-b198-795b8b9689e9" />
+<img width="704" height="616" alt="bafkreiarnhidhjgl5pb5z2fknqoufiykxej2rklikiycnwcemzr5irr66e" src="https://github.com/user-attachments/assets/1aa74b76-81cf-4cea-a66b-bbc446533350" />
 
 # PCE Colorlight Carrier — FPGA PC Engine on Colorlight i5
 
